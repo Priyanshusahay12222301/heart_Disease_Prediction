@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prediction Result</title>
+    <style>
+        body { margin:0; font-family:'Segoe UI',Arial,sans-serif; background:linear-gradient(135deg,#232526,#414345); color:#f5f5f5; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .wrapper { background:rgba(34,40,49,0.9); padding:50px 40px; border-radius:24px; max-width:520px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,0.4); position:relative; }
+        h1 { margin-top:0; font-size:2rem; letter-spacing:1px; text-align:center; color:#00adb5; }
+        .result-box { margin-top:25px; padding:25px 20px; border-radius:18px; background:#393e46; display:flex; flex-direction:column; gap:14px; border:2px solid #00adb5; }
+        .status { font-size:1.4rem; font-weight:700; text-align:center; }
+        .status.positive { color:#ff6363; }
+        .status.negative { color:#4caf50; }
+        .inputs { font-size:0.95rem; line-height:1.5; background:#222831; padding:14px 16px; border-radius:12px; }
+        .inputs span { color:#00adb5; }
+        a.button { margin-top:28px; display:inline-block; text-decoration:none; background:linear-gradient(90deg,#00adb5,#4caf50); color:#fff; padding:12px 26px; font-weight:600; border-radius:10px; transition:opacity .2s; }
+        a.button:hover { opacity:.85; }
+        .badge { position:absolute; top:-14px; right:-14px; background:linear-gradient(135deg,#f8d90f,#ff8c42); color:#222; font-weight:700; padding:8px 14px; border-radius:14px; font-size:0.8rem; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+        .note { margin-top:18px; font-size:0.75rem; color:#b0b0b0; text-align:center; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="badge">Result</div>
+        <h1>Your Prediction</h1>
+        <div class="result-box">
+            {% if result %}
+                <div class="status {{ 'positive' if result == 'Heart Disease Detected' else 'negative' }}">{{ result }}</div>
+            {% else %}
+                <div class="status">No result available.</div>
+            {% endif %}
+            {% if inputs %}
+            <div class="inputs">
+                <strong>Entered Values:</strong><br>
+                Age: <span>{{ inputs.age }}</span><br>
+                Chest Pain Type (cp): <span>{{ inputs.cp }}</span><br>
+                Max Heart Rate (thalach): <span>{{ inputs.thalach }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <a class="button" href="{{ url_for('home') }}">&#8592; New Prediction</a>
+        <div class="note">This tool is for educational/demo purposes only and not a medical diagnosis.</div>
+    </div>
+</body>
+</html>
