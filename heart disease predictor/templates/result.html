@@ -12,6 +12,18 @@
     .probability { text-align:center; font-size:0.95rem; }
     .risk-bar-wrapper { background:#222831; border-radius:10px; height:16px; overflow:hidden; }
     .risk-bar { height:100%; width:0; transition:width .8s ease; background:linear-gradient(90deg,#4caf50,#f8d90f,#ff6363); }
+    .gauge-wrapper { margin:18px auto 4px auto; width:140px; height:140px; position:relative; }
+    .gauge-wrapper svg { transform:rotate(-90deg); width:140px; height:140px; }
+    .gauge-bg { stroke:#222831; stroke-width:14; fill:none; }
+    .gauge-value { stroke:url(#grad); stroke-width:14; stroke-linecap:round; fill:none; stroke-dasharray:0 999; transition:stroke-dasharray 1s ease; }
+    .gauge-center { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; }
+    .gauge-center .pct { font-size:1.2rem; font-weight:700; }
+    .advice { margin-top:12px; font-size:0.8rem; line-height:1.35; background:#222831; padding:12px 14px; border-left:4px solid #00adb5; border-radius:10px; }
+    .advice.low { border-color:#4caf50; }
+    .advice.moderate { border-color:#f8d90f; }
+    .advice.high { border-color:#ff6363; }
+    .gauge-label { font-size:0.6rem; letter-spacing:0.5px; opacity:0.75; }
+    .mini-note { margin-top:6px; font-size:0.65rem; opacity:0.65; }
     .importance { margin-top:10px; font-size:0.8rem; background:#222831; padding:10px 12px; border-radius:10px; }
     .importance h3 { margin:0 0 6px 0; font-size:0.85rem; color:#00adb5; text-align:center; }
     .importance table { width:100%; border-collapse:collapse; }
@@ -42,10 +54,40 @@
             {% if probability is not none %}
             <div class="probability">
                 <strong>Probability (model):</strong> {{ (probability * 100) | round(1) }}% &mdash; Risk Level: <b>{{ risk_level }}</b>
-                <div class="risk-bar-wrapper" aria-label="Risk visualization">
+                <div class="risk-bar-wrapper" aria-label="Risk visualization (bar)">
                     <div class="risk-bar" id="riskBar"></div>
                 </div>
+                <!-- Circular Gauge -->
+                <div class="gauge-wrapper" aria-label="Risk circular gauge">
+                    <svg viewBox="0 0 120 120">
+                        <defs>
+                            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#4caf50"/>
+                                <stop offset="50%" stop-color="#f8d90f"/>
+                                <stop offset="100%" stop-color="#ff6363"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="gauge-bg" cx="60" cy="60" r="50" />
+                        <circle class="gauge-value" id="gaugeValue" cx="60" cy="60" r="50" />
+                    </svg>
+                    <div class="gauge-center">
+                        <div class="pct" id="gaugePct">0%</div>
+                        <div class="gauge-label">RISK</div>
+                    </div>
+                </div>
             </div>
+            {% if probability is not none %}
+            <div class="advice {{ risk_level|lower }}">
+                {% if risk_level == 'Low' %}
+                    Maintain a healthy lifestyle: balanced diet, regular exercise, and routine check-ups.
+                {% elif risk_level == 'Moderate' %}
+                    Consider consulting a healthcare professional for a preventive evaluation and lifestyle adjustments.
+                {% else %}
+                    Elevated risk: strongly consider medical consultation for further diagnostic testing and management.
+                {% endif %}
+                <div class="mini-note">Not a medical diagnosis.</div>
+            </div>
+            {% endif %}
             {% endif %}
             {% if inputs %}
             <div class="inputs">
@@ -86,5 +128,24 @@
     const bar = document.getElementById('riskBar');
     if(bar){
         requestAnimationFrame(()=>{ bar.style.width = (prob*100).toFixed(1) + '%'; });
+    }
+    // Circular gauge animation
+    const circle = document.getElementById('gaugeValue');
+    const pctLabel = document.getElementById('gaugePct');
+    if(circle){
+        const r = 50;
+        const circumference = 2 * Math.PI * r;
+        circle.style.strokeDasharray = `0 ${circumference}`;
+        const target = prob; // 0-1
+        let current = 0;
+        const step = () => {
+            current += (target - current) * 0.12;
+            if(Math.abs(current - target) < 0.002) current = target;
+            const filled = circumference * current;
+            circle.style.strokeDasharray = `${filled} ${circumference - filled}`;
+            if(pctLabel) pctLabel.textContent = (current*100).toFixed(1)+"%";
+            if(current !== target) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
     }
 </script>
