@@ -72,13 +72,4 @@ __pycache__/
 ## ⚠ Disclaimer
 This app is **for educational/demo purposes only** and must **not** be used for medical diagnosis or treatment decisions.
 
-## 🤝 Contributing
-1. Fork repo
-2. Create feature branch: `git checkout -b feature/name`
-3. Commit changes & open a PR
 
-## 📜 License
-Add a license of your choice (e.g. MIT) if you intend to share publicly.
-
----
-Feel free to request an implementation of any item in the Future Improvements list.
