@@ -3,9 +3,11 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import pandas as pd
 import joblib
 import numpy as np
+import os
 
-# Load the saved model
-model = joblib.load('heart_disease_model.pkl')
+# Load the saved model using a path relative to this file so it works when launched from repo root
+_MODEL_PATH = os.path.join(os.path.dirname(__file__), 'heart_disease_model.pkl')
+model = joblib.load(_MODEL_PATH)
 
 # Initialize Flask app
 app = Flask(__name__)
