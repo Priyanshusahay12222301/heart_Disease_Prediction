@@ -69,7 +69,7 @@ __pycache__/
 - Persistence (SQLite) for prediction history
 - Dockerization & deployment (Render / Railway / Azure / Heroku)
 
-⚡ Performance Optimization & Results
+##⚡ Performance Optimization & Results
 1. Initial Issues
 Small dataset → overfitting risk.
 
