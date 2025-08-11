@@ -7,11 +7,16 @@ import os
 
 # Load the saved model using a path relative to this file so it works when launched from repo root
 _MODEL_PATH = os.path.join(os.path.dirname(__file__), 'heart_disease_model.pkl')
-model = joblib.load(_MODEL_PATH)
+try:
+    model = joblib.load(_MODEL_PATH)
+    load_error = None
+except Exception as e:  # pragma: no cover
+    model = None
+    load_error = str(e)
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Needed for session
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev-insecure-key')  # override in prod
 
 @app.route('/')
 def home():
@@ -103,5 +108,12 @@ def result():
         return redirect(url_for('home'))
     return render_template('result.html', **payload)
 
+@app.route('/health')
+def health():
+    if model is None:
+        return jsonify(status='error', model_loaded=False, error=load_error), 500
+    return jsonify(status='ok', model_loaded=True), 200
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    debug = os.getenv('FLASK_DEBUG') == '1'
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=debug)
