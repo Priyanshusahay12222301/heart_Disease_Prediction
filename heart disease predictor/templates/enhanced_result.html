@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heart Disease Risk Assessment Results</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: "Segoe UI", Arial, sans-serif; 
+            background: linear-gradient(135deg, #232526, #414345); 
+            color: #f5f5f5; 
+            min-height: 100vh; 
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 30px; 
+            align-items: start;
+        }
+        
+        .result-panel, .analysis-panel { 
+            background: rgba(34, 40, 49, 0.95); 
+            border-radius: 20px; 
+            padding: 30px; 
+            border: 2px solid transparent;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+        
+        .result-panel.positive { border-color: #f44336; }
+        .result-panel.negative { border-color: #4caf50; }
+        .result-panel.moderate { border-color: #ff9800; }
+        
+        h1 { 
+            font-size: 2.2rem; 
+            margin-bottom: 20px; 
+            text-align: center; 
+            background: linear-gradient(90deg, #00adb5, #4caf50); 
+            -webkit-background-clip: text; 
+            background-clip: text; 
+            color: transparent;
+        }
+        
+        .result-summary {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .prediction-result {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .prediction-result.positive { color: #f44336; }
+        .prediction-result.negative { color: #4caf50; }
+        
+        .probability-display {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        
+        .risk-level {
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+        
+        .risk-low { background: #4caf50; color: white; }
+        .risk-moderate { background: #ff9800; color: white; }
+        .risk-high { background: #f44336; color: white; }
+        
+        .gauge-container {
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        .advice-section {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+        
+        .advice-section.low { border-color: #4caf50; }
+        .advice-section.moderate { border-color: #ff9800; }
+        .advice-section.high { border-color: #f44336; }
+        
+        .advice-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #00adb5;
+        }
+        
+        .input-summary {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .input-item {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .input-label {
+            color: #00adb5;
+            font-weight: 600;
+        }
+        
+        .feature-importance {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .importance-title {
+            color: #00adb5;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .importance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .importance-item:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-name {
+            font-weight: 500;
+            color: #7be495;
+        }
+        
+        .feature-value {
+            color: #90a6b8;
+            font-size: 0.9rem;
+        }
+        
+        .contribution-bar {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+        
+        .contribution-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #4caf50);
+            transition: width 0.8s ease;
+        }
+        
+        .model-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.85rem;
+            color: #90a6b8;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00adb5, #4caf50);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f5f5f5;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .disclaimer {
+            background: rgba(255, 152, 0, 0.1);
+            border: 1px solid #ff9800;
+            color: #ffe0b2;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        
+        .timestamp {
+            color: #7f97aa;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .gauge-container {
+                width: 200px;
+                height: 200px;
+            }
+            
+            h1 { font-size: 1.8rem; }
+            .prediction-result { font-size: 1.5rem; }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        .chart-container {
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Results Panel -->
+        <div class="result-panel {{ 'positive' if result == 'Heart Disease Detected' else 'negative' }}">
+            <h1>Risk Assessment Results</h1>
+            
+            <div class="result-summary">
+                {% if result %}
+                    <div class="prediction-result {{ 'positive' if result == 'Heart Disease Detected' else 'negative' }}">
+                        {{ result }}
+                    </div>
+                {% endif %}
+                
+                {% if probability is not none %}
+                    <div class="probability-display">
+                        <strong>Risk Probability:</strong> {{ risk_info.percentage }}%
+                    </div>
+                    
+                    <div class="risk-level risk-{{ risk_info.level.lower() }}">
+                        {{ risk_info.level }} Risk
+                    </div>
+                    
+                    <div class="gauge-container">
+                        <div id="riskGauge"></div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if risk_info %}
+                <div class="advice-section {{ risk_info.level.lower() }}">
+                    <div class="advice-title">Recommended Actions</div>
+                    <p>{{ risk_info.description }}</p>
+                    
+                    {% if risk_info.level == 'Low' %}
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Maintain regular physical activity</li>
+                            <li>Follow a heart-healthy diet</li>
+                            <li>Schedule routine check-ups</li>
+                            <li>Avoid smoking and excessive alcohol</li>
+                        </ul>
+                    {% elif risk_info.level == 'Moderate' %}
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Consult with a healthcare provider</li>
+                            <li>Consider cardiovascular screening</li>
+                            <li>Implement lifestyle modifications</li>
+                            <li>Monitor blood pressure and cholesterol</li>
+                        </ul>
+                    {% else %}
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li><strong>Seek immediate medical consultation</strong></li>
+                            <li>Discuss comprehensive cardiac evaluation</li>
+                            <li>Consider stress testing or imaging</li>
+                            <li>Review medications with physician</li>
+                        </ul>
+                    {% endif %}
+                </div>
+            {% endif %}
+            
+            {% if inputs %}
+                <div class="input-summary">
+                    <h3 style="color: #00adb5; margin-bottom: 15px;">Your Input Values</h3>
+                    <div class="input-grid">
+                        <div class="input-item">
+                            <span class="input-label">Age:</span> {{ inputs.age }} years
+                        </div>
+                        <div class="input-item">
+                            <span class="input-label">Sex:</span> {{ 'Male' if inputs.sex == 1 else 'Female' }}
+                        </div>
+                        <div class="input-item">
+                            <span class="input-label">Chest Pain:</span> 
+                            {% if inputs.cp == 0 %}Typical Angina
+                            {% elif inputs.cp == 1 %}Atypical Angina
+                            {% elif inputs.cp == 2 %}Non-Anginal
+                            {% else %}Asymptomatic{% endif %}
+                        </div>
+                        <div class="input-item">
+                            <span class="input-label">Blood Pressure:</span> {{ inputs.trestbps }} mmHg
+                        </div>
+                        <div class="input-item">
+                            <span class="input-label">Cholesterol:</span> {{ inputs.chol }} mg/dl
+                        </div>
+                        <div class="input-item">
+                            <span class="input-label">Max Heart Rate:</span> {{ inputs.thalach }} bpm
+                        </div>
+                        {% if 'fbs' in inputs %}
+                        <div class="input-item">
+                            <span class="input-label">Fasting Blood Sugar:</span> {{ '> 120 mg/dl' if inputs.fbs == 1 else '≤ 120 mg/dl' }}
+                        </div>
+                        {% endif %}
+                        {% if 'exang' in inputs %}
+                        <div class="input-item">
+                            <span class="input-label">Exercise Angina:</span> {{ 'Yes' if inputs.exang == 1 else 'No' }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <a class="btn btn-primary" href="{{ url_for('home') }}">New Assessment</a>
+                <button class="btn btn-secondary" onclick="window.print()">Print Results</button>
+            </div>
+        </div>
+        
+        <!-- Analysis Panel -->
+        <div class="analysis-panel">
+            <h2 style="color: #00adb5; margin-bottom: 20px;">Detailed Analysis</h2>
+            
+            {% if importance %}
+                <div class="feature-importance">
+                    <div class="importance-title">Top Risk Factors</div>
+                    <div style="font-size: 0.85rem; color: #90a6b8; text-align: center; margin-bottom: 15px;">
+                        Features with the highest impact on your risk assessment
+                    </div>
+                    
+                    {% for item in importance[:5] %}
+                        <div class="importance-item">
+                            <div>
+                                <div class="feature-name">{{ item.display_name or item.feature }}</div>
+                                <div class="feature-value">Value: {{ item.value }}</div>
+                            </div>
+                            <div class="contribution-bar">
+                                <div class="contribution-fill" data-width="{{ (item.abs_contribution / importance[0].abs_contribution * 100) if importance[0].abs_contribution > 0 else 0 }}"></div>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #06b6d4;">
+                                {{ '%.3f'|format(item.contribution) }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Feature Importance Chart -->
+                <div class="chart-container">
+                    <div id="importanceChart"></div>
+                </div>
+            {% endif %}
+            
+            {% if model_type %}
+                <div class="model-info">
+                    <h3 style="color: #7be495; margin-bottom: 10px;">Model Information</h3>
+                    <p><strong>Algorithm:</strong> {{ model_type.replace('_', ' ').title() }}</p>
+                    {% if prediction_time %}
+                        <p><strong>Analysis Time:</strong> {{ prediction_time[:19].replace('T', ' ') }}</p>
+                    {% endif %}
+                    <p><strong>Features Analyzed:</strong> 13 clinical parameters</p>
+                    <p><strong>Model Performance:</strong> Optimized with cross-validation</p>
+                </div>
+            {% endif %}
+            
+            <div class="feature-importance">
+                <div class="importance-title">Understanding Your Results</div>
+                
+                <div style="margin-bottom: 15px;">
+                    <h4 style="color: #7be495; margin-bottom: 8px;">Risk Probability</h4>
+                    <p style="font-size: 0.9rem;">The percentage represents the statistical likelihood of heart disease based on your inputs and the trained model. Higher percentages indicate greater risk.</p>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <h4 style="color: #7be495; margin-bottom: 8px;">Feature Impact</h4>
+                    <p style="font-size: 0.9rem;">Each clinical parameter contributes differently to your risk score. The analysis shows which factors have the most influence on your assessment.</p>
+                </div>
+                
+                <div>
+                    <h4 style="color: #7be495; margin-bottom: 8px;">Next Steps</h4>
+                    <p style="font-size: 0.9rem;">Use these results as a starting point for discussions with healthcare professionals. Regular monitoring and lifestyle factors play crucial roles in heart health.</p>
+                </div>
+            </div>
+            
+            <div class="disclaimer">
+                <strong>Medical Disclaimer:</strong> This assessment is for educational purposes only and should not replace professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical decisions.
+            </div>
+            
+            {% if prediction_time %}
+                <div class="timestamp">
+                    Assessment completed: {{ prediction_time[:19].replace('T', ' ') }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Hidden data for JavaScript -->
+    <script type="application/json" id="chartData">
+    {
+        "probability": {{ probability if probability is not none else 'null' }},
+        "importance": {{ importance | tojson | safe if importance else '[]' }}
+    }
+    </script>
+    
+    <script>
+        // Initialize contribution bars
+        document.addEventListener('DOMContentLoaded', function() {
+            const contributionBars = document.querySelectorAll('.contribution-fill');
+            contributionBars.forEach(bar => {
+                const width = bar.getAttribute('data-width');
+                if (width) {
+                    bar.style.width = width + '%';
+                }
+            });
+            
+            // Load chart data
+            const chartDataElement = document.getElementById('chartData');
+            if (chartDataElement) {
+                try {
+                    const chartData = JSON.parse(chartDataElement.textContent);
+                    
+                    // Risk Gauge Chart
+                    if (chartData.probability !== null && document.getElementById('riskGauge')) {
+                        createRiskGauge(chartData.probability * 100);
+                    }
+                    
+                    // Feature Importance Chart
+                    if (chartData.importance && chartData.importance.length > 0 && document.getElementById('importanceChart')) {
+                        createImportanceChart(chartData.importance);
+                    }
+                } catch (e) {
+                    console.error('Error parsing chart data:', e);
+                }
+            }
+        });
+        
+        function createRiskGauge(riskValue) {
+            const riskData = [{
+                domain: { x: [0, 1], y: [0, 1] },
+                value: riskValue,
+                title: { text: "Risk Level %" },
+                type: "indicator",
+                mode: "gauge+number+delta",
+                gauge: {
+                    axis: { range: [null, 100] },
+                    bar: { color: "darkblue" },
+                    steps: [
+                        { range: [0, 30], color: "#4caf50" },
+                        { range: [30, 60], color: "#ff9800" },
+                        { range: [60, 100], color: "#f44336" }
+                    ],
+                    threshold: {
+                        line: { color: "red", width: 4 },
+                        thickness: 0.75,
+                        value: 90
+                    }
+                }
+            }];
+            
+            const riskLayout = { 
+                width: 250, 
+                height: 250, 
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f5f5f5' }
+            };
+            
+            Plotly.newPlot('riskGauge', riskData, riskLayout, {displayModeBar: false});
+        }
+        
+        function createImportanceChart(importance) {
+            const importanceFeatures = importance.slice(0, 5).map(item => item.display_name || item.feature);
+            const importanceValues = importance.slice(0, 5).map(item => item.abs_contribution);
+            
+            const importanceTrace = {
+                x: importanceValues,
+                y: importanceFeatures,
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: ['#06b6d4', '#4caf50', '#7be495', '#00adb5', '#90c695']
+                }
+            };
+            
+            const importanceLayout = {
+                title: {
+                    text: 'Feature Impact Analysis',
+                    font: { color: '#f5f5f5', size: 16 }
+                },
+                xaxis: { 
+                    title: 'Impact Score',
+                    color: '#f5f5f5',
+                    gridcolor: 'rgba(255,255,255,0.2)'
+                },
+                yaxis: { 
+                    color: '#f5f5f5',
+                    automargin: true
+                },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#f5f5f5' },
+                margin: { l: 120, r: 20, t: 40, b: 40 }
+            };
+            
+            Plotly.newPlot('importanceChart', [importanceTrace], importanceLayout, {displayModeBar: false});
+        }
+    </script>
+</body>
+</html>
