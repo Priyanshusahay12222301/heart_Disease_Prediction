@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Heart Disease Prediction</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:"Segoe UI",Arial,sans-serif;min-height:100vh;background:radial-gradient(circle at 30% 30%,#243447,#0d1823 65%);color:#eef3f7;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:28px}
+        /* Stars */
+        .stars{position:fixed;inset:0;z-index:0;}
+        .star{position:absolute;width:2px;height:2px;background:#ffffff;border-radius:50%;opacity:.8;animation:twinkle 2.6s linear infinite}
+        .star.dim{animation-duration:3.4s;opacity:.45}
+        @keyframes twinkle{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(.5);opacity:.25}}
+        /* Card */
+        .card{position:relative;z-index:1;width:100%;max-width:450px;padding:40px 46px 38px;border-radius:20px;background:rgba(24,36,48,.88);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.12);box-shadow:0 14px 38px -8px rgba(0,0,0,.55)}
+        .card:before{content:"";position:absolute;inset:0;padding:2px;border-radius:20px;background:linear-gradient(90deg,#06b6d4,#4caf50);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+        h1{font-size:2.05rem;line-height:1.15;margin:0 0 8px;font-weight:700;letter-spacing:.5px;background:linear-gradient(90deg,#06b6d4,#7be495);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .subtitle{font-size:.73rem;letter-spacing:2px;font-weight:600;text-transform:uppercase;color:#06b6d4;margin-bottom:18px;opacity:.9}
+        form{display:flex;flex-direction:column;gap:20px;margin-top:4px}
+        .field{display:flex;flex-direction:column;gap:6px;position:relative}
+        label{font-size:.68rem;letter-spacing:.5px;font-weight:600;text-transform:uppercase;color:#7f97aa;display:flex;align-items:center;gap:6px}
+        label .info-icon{cursor:help;font-size:.85rem;color:#06b6d4;filter:drop-shadow(0 0 4px rgba(6,182,212,.4))}
+        input,select{padding:13px 14px 12px;border-radius:14px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.08);color:#fff;font-size:.95rem;transition:border .25s,background .25s,box-shadow .25s}
+        input:focus,select:focus{outline:none;border-color:#06b6d4;box-shadow:0 0 0 3px rgba(6,182,212,.35);background:rgba(255,255,255,0.12)}
+        ::placeholder{color:#7b8d9e}
+        select option{color:#0d1823}
+        .field-desc{font-size:.63rem;line-height:1.25;color:#90a6b8;margin-top:3px;letter-spacing:.3px}
+        .inline-badge{display:inline-block;padding:2px 6px;border-radius:10px;background:rgba(255,255,255,0.1);font-size:.55rem;letter-spacing:.5px;margin-left:4px}
+        .tips{margin-top:18px;display:grid;gap:8px;font-size:.62rem;line-height:1.35;color:#7f97aa;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:12px 14px;border-radius:14px}
+        .tips h2{margin:0 0 4px;font-size:.65rem;text-transform:uppercase;letter-spacing:1.5px;color:#06b6d4}
+        button{margin-top:4px;padding:14px 0 13px;border:none;border-radius:16px;font-size:.95rem;font-weight:600;letter-spacing:.5px;cursor:pointer;background:linear-gradient(90deg,#06b6d4,#4caf50);color:#fff;box-shadow:0 6px 20px -6px rgba(6,182,212,.55);transition:transform .25s,box-shadow .25s}
+        button:hover{transform:translateY(-3px);box-shadow:0 10px 28px -6px rgba(6,182,212,.65)}
+        button:active{transform:translateY(-1px)}
+        .helper{margin-top:14px;font-size:.7rem;line-height:1.35;color:#90a6b8}
+        .helper strong{color:#06b6d4;font-weight:600}
+        .prediction{margin-top:18px;font-size:.9rem;font-weight:600;text-align:center;color:#f8d90f}
+        .foot{margin-top:26px;font-size:.6rem;text-align:center;color:#6f8597;letter-spacing:.5px}
+        .foot a{color:#06b6d4;text-decoration:none}
+        .foot a:hover{text-decoration:underline}
+        @media (max-width:520px){.card{padding:34px 30px 30px}h1{font-size:1.85rem}}
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    <div class="card">
+        <div class="subtitle">Machine Learning Demo</div>
+        <h1>Heart Disease Prediction</h1>
+            <div class="helper">Provide three inputs: <strong>Age</strong>, chest pain type <strong>(cp)</strong>, and max heart rate <strong>(thalach)</strong>. All fields required.</div>
+            <form action="/predict" method="POST" novalidate aria-describedby="form-tips">
+                <div class="field">
+                    <label for="age">Age <span class="info-icon" title="Patient age in completed years.">ℹ</span></label>
+                    <input id="age" name="age" type="number" inputmode="numeric" min="1" max="120" placeholder="e.g. 57" required aria-required="true" />
+                <div class="field-desc">Typical dataset range: 29–77 yrs.</div>
+                </div>
+                <div class="field">
+                    <label for="cp">Chest Pain (cp) <span class="info-icon" title="Categorical: type of chest pain experienced.">ℹ</span></label>
+                    <select id="cp" name="cp" required aria-required="true">
+                        <option value="" disabled selected>Choose type</option>
+                        <option value="0">0 – Typical angina</option>
+                        <option value="1">1 – Atypical angina</option>
+                        <option value="2">2 – Non‑anginal pain</option>
+                        <option value="3">3 – Asymptomatic</option>
+                    </select>
+                <div class="field-desc">0=Typical → 3=Asymptomatic.</div>
+                </div>
+                <div class="field">
+                    <label for="thalach">Max Heart Rate (thalach) <span class="info-icon" title="Maximum heart rate achieved during stress test.">ℹ</span></label>
+                    <input id="thalach" name="thalach" type="number" inputmode="numeric" min="60" max="220" placeholder="60-220" required aria-required="true" />
+                <div class="field-desc">Peak bpm (60–220).</div>
+                </div>
+                <button type="submit" id="submitBtn" disabled>Predict Risk</button>
+            </form>
+                <div class="tips" id="form-tips" aria-live="polite">
+                    <h2>Quick Guide</h2>
+                    <ul style="margin:0;padding-left:16px;display:grid;gap:6px;list-style:disc inside;font-size:.62rem;">
+                        <li><strong>Age</strong>: Years (29–77 common in sample).</li>
+                        <li><strong>cp</strong>: 0 Typical, 1 Atypical, 2 Non‑anginal, 3 Asymptomatic.</li>
+                        <li><strong>thalach</strong>: Highest heart rate during test (bpm).</li>
+                    </ul>
+                </div>
+            {% if prediction_text %}
+                <div class="prediction">{{ prediction_text }}</div>
+            {% endif %}
+        <div class="foot">Demo only – not medical advice • <a href="/result">Last Result</a> • <a href="https://github.com/Priyanshusahay12222301/heart_Disease_Prediction" target="_blank" rel="noopener">Source</a></div>
+    </div>
+        <script>
+            // Star field generation
+            (function(){
+                const sc = document.getElementById('stars');
+                const COUNT = 120;
+                for (let i=0;i<COUNT;i++){
+                    const s=document.createElement('div');
+                    s.className='star'+(Math.random()>0.55?' dim':'');
+                    s.style.top=(Math.random()*100)+'vh';
+                    s.style.left=(Math.random()*100)+'vw';
+                    s.style.animationDelay=(Math.random()*3)+'s';
+                    sc.appendChild(s);
+                }
+            })();
+            // Real-time form completeness + basic range guard
+            const form = document.querySelector('form');
+            const submitBtn = document.getElementById('submitBtn');
+            const inputs = Array.from(form.querySelectorAll('input[required], select[required]'));
+            function validate(){
+                let valid = true;
+                inputs.forEach(el=>{
+                    el.style.borderColor='rgba(255,255,255,0.16)';
+                    if(!el.value){ valid=false; return; }
+                    if(el.id==='age' && (el.value<1 || el.value>120)){ valid=false; el.style.borderColor='#ff6363'; }
+                    if(el.id==='thalach' && (el.value<60 || el.value>220)){ valid=false; el.style.borderColor='#ff6363'; }
+                });
+                submitBtn.disabled = !valid;
+                submitBtn.style.opacity = valid ? '1' : '.55';
+                submitBtn.style.cursor = valid ? 'pointer' : 'not-allowed';
+            }
+            form.addEventListener('input', validate);
+            validate();
+            form.addEventListener('submit', e=>{ if(submitBtn.disabled){ e.preventDefault(); validate(); } });
+        </script>
+</body>
+</html>
